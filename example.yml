@@ -1,0 +1,24 @@
+# Setup of the fuzzer
+fuzzer:
+  # Path to ProB version providing the fuzzer and mutator
+  path: "$PROBDIR"  # Environment variables are substituted if possible.
+
+  # Solvers are defined below with arbitrary names.
+  targets:
+    - prob_1.13.0
+    - cdclt_1.13.0
+  references:
+    - prob_1.10.0
+
+  # Options are described in the fuzzer's readme
+  options:
+    - size(5)
+
+
+solvers:
+  # The solvers can be defined with arbitrary but unique names.
+  prob_1.13.0:
+    path: "prob_dists/1.13.0"
+  prob_1.10.0:
+    path: "prob_dists/1.13.0"
+    precompile: true
