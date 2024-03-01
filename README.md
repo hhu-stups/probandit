@@ -77,6 +77,23 @@ The respective solver configuration options are as follows:
   **Note:** Available environment variables can be used and will be expanded,
   e.g. `$PROBDIR` (or any available variable).
 
+* `preferences` _(Optional)_:
+  List of preferences with which the respective `probcli`
+  will be called.
+
+  For instance, the following will query the CLI with `-p SMT TRUE`
+
+  ```yaml
+  prob_1.13.0:
+    preferences:
+      - SMT TRUE
+  ```
+
+* `base_solver` _(Optional)_:
+  Name of the base solver to use. Supported values are all valid solver names
+  for the `prob2_interface:cbc_timed_solve_with_opts/6` predicate.
+  Examples include:
+  `PROB`, `KODKOD`, `Z3`, `Z3AXM`, `Z3CNS`, and `CDCLT`.
 
 ## References
 

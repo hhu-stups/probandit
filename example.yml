@@ -20,5 +20,10 @@ solvers:
   prob_1.13.0:
     path: "prob_dists/1.13.0"
   prob_1.10.0:
-    path: "prob_dists/1.13.0"
+    path: "prob_dists/1.10.0"
     precompile: true
+  cdclt_1.13.0:
+    path: "prob_dists/1.13.0"
+    base_solver: CDCLT
+    preferences:
+      - SMT TRUE
