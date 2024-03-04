@@ -1,11 +1,24 @@
-# b"yes('.'(=('Major',1),'.'(=('Minor',13),'.'(=('Service',1),'.'(=('Qualifier',nightly),'.'(=('GitRevision','87f2186466c702f5f1c272df71573fb1afb6288e'),'.'(=('LastChangedDate','Thu Feb 29 19:14:56 2024 +0100'),'.'(=('PrologInfo','SICStus 4.8.0 (x86_64-linux-glibc2.17): Sun Dec  4 13:17:40 UTC 2022'),[]))))))))\n\x01"
+"""
+This module contains the parser for the answer format of the prob prolog CLI.
+
+The finally parsed format is a dictionary with the following keys
+- type: one of 'number', 'variable', 'atom', 'compound', 'list'
+- value: the parsed value
+    - if type is 'number', value is a float or int
+    - if type is 'compound', value is a tuple (functor, args)
+    - if type is 'list', value is a list of terms
+    - else, value is a string
+
+The main entry points are `parse_term` and `parse_terms`.
+
+Utility functions exist in the form of:
+- `translate_prolog_dot_list`: translates a parsed prolog list in dot
+   notation into a python list
+- `translate_bindings`: translates a list of =/2 compounds into a dictionary
+   such that e.g. `=(a, 1), =(b, 2)` becomes `{'a': 1, 'b': 2}`.
+"""
 
 def parse_term(answer):
-    # term = {number} number
-    #      | {variable} variable
-    #      | {atom} name
-    #      | {list} l_sq params r_sq
-    #      | {compound} [functor]:name l_par params r_par;
     type = None
     if answer[0] in '0123456789.+-':
         term, answer = parse_number(answer)
@@ -73,6 +86,18 @@ def translate_bindings(bindings_list):
     Translates a list of =/2 compounds into a dictionary.
     Assumes that `translate_prolog_dot_list` has been applied to the values
     if necessary.
+
+    Example: The term
+
+        {type: 'compound',
+         value: ('=', [
+                {type: 'atom', value: 'a'},
+                {type: 'number', value: 1}
+         ])}
+
+    becomes
+
+        [{'type': 'atom', 'value': 'a'}, {'type': 'number', 'value': 1}]
     """
     bindings = {}
     for binding in bindings_list:
