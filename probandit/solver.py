@@ -1,4 +1,5 @@
 import os
+import socket
 
 class Solver():
 
@@ -42,3 +43,7 @@ class Solver():
             socket_call += f' {prefs}'
 
         return socket_call
+
+    def connect_socket(self, port):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('localhost', port))
