@@ -1,9 +1,11 @@
 import os
 import socket
 
+from probcli import ProBCli
+
 class Solver():
 
-    def __init__(self, solver_config):
+    def __init__(self, **solver_config):
         """
         Create a new Solver object. The configuration is a dictionary with
         the following keys (also see the solver configuration section in the
@@ -30,19 +32,25 @@ class Solver():
         if self.pred_call is not None:
             self.pred_call = f'cbc_timed_solve_with_opts({self.base_solver},Options,Predicate,Identifiers,Result,Milliseconds)'
 
-    def get_socket_call(self, port=None):
-        if port is None:
-            port_switch = '-sf'  # Starts the repl on some free port
-        else:
-            port_switch = f'-s {port}'
+        self._cli_args = []
+        for pref in self.preferences:
+            # Prefs can be strings or dicts
+            if isinstance(pref, dict):
+                for k, v in pref.items():
+                    if isinstance(v, bool):
+                        v = 'TRUE' if v else 'FALSE'
+                    self._cli_args += ['-p', k, v]
+            else:
+                self._cli_args += ['-p'] + pref.split()
 
-        socket_call = f"{self.path} {port_switch}"
+        self.cli = ProBCli(self.path)
 
-        prefs = ' '.join('-p ' + pref for pref in self.preferences)
-        if len(prefs) > 0:
-            socket_call += f' {prefs}'
 
-        return socket_call
+    def start(self, port=None):
+        call_args = [self.path]
+        used_port = self.cli.start(port, call_args)
+        self.port = used_port
+
 
     def connect_socket(self, port):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

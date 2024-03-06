@@ -105,8 +105,16 @@ def translate_bindings(bindings_list):
             raise ValueError(f"Expected binding over =/2, got {binding}")
         if len(binding['value'][1]) != 2:
             raise ValueError(f"Expected binding over =/2, got {binding}")
-        key = binding['value'][1][0]
-        value = binding['value'][1][1]
+        key_type = binding['value'][1][0]['type']
+        if key_type not in ('atom', 'variable'):
+            raise ValueError(f"Expected atom or variable as key, got {key_type}")
+
+        lhs = binding['value'][1][0]
+        rhs = binding['value'][1][1]
+
+        key = lhs['value']
+        value = rhs
+
         bindings[key] = value
     return bindings
 

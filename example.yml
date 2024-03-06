@@ -26,4 +26,5 @@ solvers:
     path: "prob_dists/1.13.0"
     base_solver: CDCLT
     preferences:
-      - SMT TRUE
+      - SMT: TRUE
+      - KODKOD_FULL

@@ -1,4 +1,4 @@
-from probandit.probcli.answerparser import parse_term, translate_prolog_dot_list, translate_bindings
+from probcli.answerparser import parse_term, translate_prolog_dot_list, translate_bindings
 
 
 def test_parse_atom_basic():

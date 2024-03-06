@@ -13,5 +13,5 @@ if __name__ == '__main__':
     config = yaml.safe_load(open(config_file, 'r'))
 
     for id in config['solvers']:
-        solver = Solver(config['solvers'][id])
-        print(solver.get_socket_call())
+        solver = Solver(**(config['solvers'][id]))
+        print(solver._cli_args)
