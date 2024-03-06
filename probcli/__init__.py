@@ -55,7 +55,7 @@ class ProBCli():
         if not self.is_connected:
             raise ValueError('Not connected')
 
-        if self.interrupt_cmd_path:
+        if self.interrupt_cmd_path and os.path.exists(self.interrupt_cmd_path):
             self.send_interrupt()
         self._halt()
 
@@ -89,6 +89,42 @@ class ProBCli():
         data = data.decode('utf-8').strip('\x01')
         answer, _ = answerparser.parse_term(data)
         return answer
+
+    def query_probcli_version_info(self):
+        """
+        Returns a dictionary with version information about the
+        connected probcli.
+
+        The information dictionary has the following keys:
+        - Major
+        - Minor
+        - Service
+        - Qualifier
+        - GitRevision
+        - LastChangedDate
+        - PrologInfo
+        """
+        if not self.is_connected:
+            raise ValueError('Not connected')
+
+        cmd = ('get_version(Major,Minor,Service,Qualifier,GitRevision,'
+               'LastChangedDate,PrologInfo).')
+
+        self.send_prolog(cmd)
+        raw_answer = self.receive_prolog()
+
+        if raw_answer['type'] != 'compound':
+            raise ValueError('Unable to load version info')
+
+        raw_first_arg = raw_answer['value'][1][0]
+        bind_list = answerparser.translate_prolog_dot_list(raw_first_arg)
+        bindings = answerparser.translate_bindings(bind_list)
+
+        # Ensure we only take the values as well.
+        for b in bindings:
+            bindings[b] = bindings[b]['value']
+
+        return bindings
 
     def _start_probcli_server(self, port, args):
         call_args = [self.path]
