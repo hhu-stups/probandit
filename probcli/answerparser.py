@@ -209,7 +209,12 @@ def parse_atom(answer):
         answer = consume('\'', answer)
         while answer and answer[0] != '\'':
             atom += answer[0]
-            answer = answer[1:]
+            # Beware of escape chars!
+            if answer[0] == '\\':
+                atom += answer[1]
+                answer = answer[2:]
+            else:
+                answer = answer[1:]
         answer = consume('\'', answer)
     elif answer[0] in '+-*/\\^<>=~:.?@#$&': # special characters
         while answer and (answer[0] in '+-*/\\^<>=~:.?@#$&'):
