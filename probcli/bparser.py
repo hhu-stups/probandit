@@ -45,6 +45,8 @@ class BParser():
             exception_text = exception[0]['value'][1][1]['value']
             raise ValueError(f'Parsing failed: {exception_text}')
 
+        if parsed[-1] == '.':
+            parsed = parsed[:-1]
         return parsed
 
     def _receive_answer(self):

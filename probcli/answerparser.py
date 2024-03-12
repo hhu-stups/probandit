@@ -18,6 +18,38 @@ Utility functions exist in the form of:
    such that e.g. `=(a, 1), =(b, 2)` becomes `{'a': 1, 'b': 2}`.
 """
 
+def parse_answer(answer):
+    """
+    Parse a prob prolog CLI answer into a response and additional information.
+
+    For a yes answer, the information is a dictionary containing the
+    accompanying bindings.
+
+    The info might be None.
+    """
+    term, _ = parse_term(answer)
+
+    response = None
+    info = None
+
+    if term['type'] == 'compound':
+        response = term['value'][0]
+        if response == 'yes':
+            info = term['value'][1]
+            value_list = translate_prolog_dot_list(term['value'][1][0])
+            info = translate_bindings(value_list)
+        elif response in ('progress, call_back'):
+            info = term['value'][1]
+        else:
+            raise ValueError(f"Unexpected answer, got {response}")
+    elif term['type'] == 'atom':
+        response = term['value']
+    else:
+        raise ValueError(f"Unexpected answer, got {response}")
+
+    return response, info
+
+
 def parse_term(answer):
     type = None
     if answer[0] in '0123456789.+-':
@@ -101,13 +133,15 @@ def translate_bindings(bindings_list):
     """
     bindings = {}
     for binding in bindings_list:
-        if binding['type'] != 'compound' or binding['value'][0] != '=':
+        if (binding['type'] != 'compound' or binding['value'][0] != '='
+            or binding['value'][0] != 'binding'):
             raise ValueError(f"Expected binding over =/2, got {binding}")
         if len(binding['value'][1]) != 2:
             raise ValueError(f"Expected binding over =/2, got {binding}")
         key_type = binding['value'][1][0]['type']
         if key_type not in ('atom', 'variable'):
-            raise ValueError(f"Expected atom or variable as key, got {key_type}")
+            raise ValueError(
+                f"Expected atom or variable as key, got {key_type}")
 
         lhs = binding['value'][1][0]
         rhs = binding['value'][1][1]
@@ -195,6 +229,7 @@ def parse_int_format(answer, base, cast_to_int=True):
     else:
         return numstr, answer
 
+
 def parse_var(answer):
     # variable = '_' alpha* | capital_letter alpha*;
     var = ''
@@ -202,6 +237,7 @@ def parse_var(answer):
         var += answer[0]
         answer = answer[1:]
     return var, answer
+
 
 def parse_atom(answer):
     atom = ''
@@ -216,11 +252,11 @@ def parse_atom(answer):
             else:
                 answer = answer[1:]
         answer = consume('\'', answer)
-    elif answer[0] in '+-*/\\^<>=~:.?@#$&': # special characters
+    elif answer[0] in '+-*/\\^<>=~:.?@#$&':  # special characters
         while answer and (answer[0] in '+-*/\\^<>=~:.?@#$&'):
             atom += answer[0]
             answer = answer[1:]
-    elif answer[0] in '!;': # Single chars
+    elif answer[0] in '!;':  # Single chars
         atom = answer[0]
         answer = answer[1:]
     else:

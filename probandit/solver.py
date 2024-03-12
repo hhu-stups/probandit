@@ -1,6 +1,7 @@
 import os
 import socket
 
+import probcli.answerparser as answerparser
 from probcli import ProBCli
 
 class Solver():
@@ -27,10 +28,10 @@ class Solver():
             self.path = os.path.join(self.path, 'probcli')
 
         self.preferences = self.config.get('preferences', [])
-        self.base_solver = self.config.get('base_solver', 'PROB')
+        self.base_solver = self.config.get('base_solver', '\'PROB\'')
         self.pred_call = self.config.get('pred_call', None)
-        if self.pred_call is not None:
-            self.pred_call = f'cbc_timed_solve_with_opts({self.base_solver},Options,Predicate,Identifiers,Result,Milliseconds)'
+        if self.pred_call is None:
+            self.pred_call = f'cbc_timed_solve_with_opts({self.base_solver},_,$pred,_,Res,Msec)'
 
         self._cli_args = []
         for pref in self.preferences:
@@ -46,12 +47,27 @@ class Solver():
         self.cli = ProBCli(self.path)
 
 
-    def start(self, port=None):
-        call_args = [self.path]
-        used_port = self.cli.start(port, call_args)
+    def start(self, port=None, cli_args=[]):
+        used_port = self.cli.start(port, cli_args)
         self.port = used_port
 
 
-    def connect_socket(self, port):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('localhost', port))
+    def close(self):
+        self.cli.close()
+        self.port = None
+
+
+    def solve(self, predicate):
+        parsed_pred = self.cli.parser.parse_to_prolog(predicate)
+        query = self.pred_call.replace('$pred', parsed_pred)
+
+        self.cli.send_prolog(query)
+        answer, info = self.cli.receive_prolog()
+
+        if info and 'Res' in info:
+            solution = info['Res']['value'][1][0]
+            bindings = answerparser.translate_prolog_dot_list(solution)
+            bindings = answerparser.translate_bindings(bindings)
+            info = bindings
+
+        return answer, info

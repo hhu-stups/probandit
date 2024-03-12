@@ -3,6 +3,7 @@ import socket
 import subprocess
 
 import probcli.answerparser as answerparser
+from probcli.bparser import BParser
 
 
 class ProBCli():
@@ -37,6 +38,7 @@ class ProBCli():
                                                interrupt_bin_name)
 
         self._socket = None
+        self.parser = None
 
     def start(self, port=None, args=[]):
         if self.is_connected:
@@ -48,6 +50,10 @@ class ProBCli():
         self._socket.connect(('localhost', used_port))
 
         self.is_connected = True
+
+        parser_path = os.path.join(os.path.dirname(self.path),
+                                   'lib', 'probcliparser.jar')
+        self.parser = BParser(parser_path)
 
         return used_port
 
@@ -87,8 +93,7 @@ class ProBCli():
             if b'\x01' in data:  # Prolog terminates with \x01
                 break
         data = data.decode('utf-8').strip('\x01')
-        answer, _ = answerparser.parse_term(data)
-        return answer
+        return answerparser.parse_answer(data)
 
     def query_probcli_version_info(self):
         """
