@@ -139,8 +139,15 @@ def test_list_translation():
 
 def test_translate_bindings():
     bindings = [
-        {'type': 'compound', 'value': ('=', [1, 2])},
-        {'type': 'compound', 'value': ('=', [3, 3])},
+        {'type': 'compound',
+         'value': ('=',
+                   [{'type': 'atom', 'value': 'a'},
+                    {'type': 'atom', 'value': 'b'}])},
+        {'type': 'compound',
+         'value': ('=',
+                   [{'type': 'atom', 'value': 'x'},
+                    {'type': 'atom', 'value': 'x'}])},
     ]
     result = translate_bindings(bindings)
-    assert result == {1: 2, 3: 3}
+    assert result == {'a': {'type': 'atom', 'value': 'b'},
+                      'x': {'type': 'atom', 'value': 'x'}}
