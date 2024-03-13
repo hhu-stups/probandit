@@ -21,7 +21,9 @@ class Solver():
         - prolog_call (optional): the Prolog call used to evaluate a predicate.
             - Use $pred as a placeholder for the predicate
             - Use $base as a placeholder for the base solver
+            - Use $options as a placeholder for the call options
             - Default is 'prob2_interface:cbc_timed_solve_with_opts/6'
+        - call_options (optional): a list of options passed to the prolog_call
         - call_result_var (optional): the name of the variable in the Prolog
             call that contains the result
             - Default is 'Res'
@@ -45,8 +47,9 @@ class Solver():
         self.base_solver = self.config.get('base_solver', '\'PROB\'')
 
         self.pred_call = self.config.get('prolog_call', None)
+        self.call_opts = self.config.get('call_options', '[]')
         if self.pred_call is None:
-            self.pred_call = f'cbc_timed_solve_with_opts($base,_,$pred,_,Res,Msec)'
+            self.pred_call = f'cbc_timed_solve_with_opts($base,$options,$pred,_,Res,Msec)'
             self.pred_call = self.pred_call.replace('$base', self.base_solver)
         self.res_var = self.config.get('call_result_var', 'Res')
         self.time_var = self.config.get('call_time_var', 'Msec')
@@ -96,6 +99,7 @@ class Solver():
         """
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
+        query = query.replace('$options', self.call_opts)
 
         self.cli.send_prolog(query)
         answer, info = self.cli.receive_prolog()
