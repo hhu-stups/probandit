@@ -151,3 +151,16 @@ def test_translate_bindings():
     result = translate_bindings(bindings)
     assert result == {'a': {'type': 'atom', 'value': 'b'},
                       'x': {'type': 'atom', 'value': 'x'}}
+
+
+def test_empty_set_parse():
+    answer = "binding(f,[],{})"
+    result, rest = parse_term(answer)
+
+    expected = {'type': 'compound',
+                'value': ('binding',
+                          [{'type': 'atom', 'value': 'f'},
+                           {'type': 'list', 'value': []},
+                           {'type': 'atom', 'value': '{}'}])}
+    assert result == expected
+    assert rest == ''

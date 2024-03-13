@@ -75,6 +75,12 @@ def parse_term(answer):
         else:
             term, answer = parse_terms(answer)
         answer = consume(']', answer)
+    elif answer[0] == '{':
+        # ProB sends {} back as empty set
+        answer = consume('{', answer)
+        answer = consume('}', answer)
+        type = 'atom'
+        term = r'{}'
     else:
         raise ValueError(f"Expected term, got {answer}")
 
@@ -133,8 +139,7 @@ def translate_bindings(bindings_list):
     """
     bindings = {}
     for binding in bindings_list:
-        if (binding['type'] != 'compound' or binding['value'][0] != '='
-            or binding['value'][0] != 'binding'):
+        if binding['type'] != 'compound' or binding['value'][0] != '=':
             raise ValueError(f"Expected binding over =/2, got {binding}")
         if len(binding['value'][1]) != 2:
             raise ValueError(f"Expected binding over =/2, got {binding}")
