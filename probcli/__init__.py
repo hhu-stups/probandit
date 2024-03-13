@@ -39,6 +39,7 @@ class ProBCli():
 
         self._socket = None
         self.parser = None
+        self.cli_process = None
 
     def start(self, port=None, args=[]):
         if self.is_connected:
@@ -70,6 +71,8 @@ class ProBCli():
 
         self.revision = None
         self.interrupt_id = None
+
+        self.cli_process = None
 
     def _halt(self):
         self._socket.sendall(b'halt.\0')
@@ -142,12 +145,12 @@ class ProBCli():
         call_args += args
 
         # Start the probcli binary as subprocess
-        p = subprocess.Popen(call_args,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        self.cli_process = subprocess.Popen(call_args,
+                                            stdout=subprocess.PIPE,
+                                            stderr=subprocess.PIPE)
 
         # When the cli is starting, it prints 6 lines to stdout
-        used_port = self._check_probcli_startup_output(p)
+        used_port = self._check_probcli_startup_output(self.cli_process)
 
         return used_port
 

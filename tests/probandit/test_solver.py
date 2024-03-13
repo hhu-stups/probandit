@@ -35,6 +35,7 @@ def test_avl_translation():
 
     assert actual == expected
 
+
 def test_string_translation():
     value = ('string', [{'type': 'atom', 'value': 'hello world'}])
 
@@ -44,6 +45,7 @@ def test_string_translation():
     actual = s._translate_solution_value(value)
 
     assert actual == expected
+
 
 def test_floating_translation():
     value = ('floating', [{'type': 'number', 'value': 2.5}])
@@ -82,8 +84,9 @@ def test_tuple_translation():
 
     assert actual == expected
 
+
 def test_bseq_translation():
-    value = {(1,'a'), (2,'b'), (3,'c')}
+    value = {(1, 'a'), (2, 'b'), (3, 'c')}
 
     s = Solver(path='foo', mock=True)
 
@@ -94,11 +97,22 @@ def test_bseq_translation():
 
 
 def test_bseq_translation_failing():
-    value = {(1,'a'), (2,'b'), (4,'c')}  # Not a proper sequence
+    value = {(1, 'a'), (2, 'b'), (4, 'c')}  # Not a proper sequence
 
     s = Solver(path='foo', mock=True)
 
     expected = None
     actual = s._translate_bseq(value)
+
+    assert actual == expected
+
+
+def test_contradiction_found():
+    value = {'type': 'atom', 'value': 'contradiction_found'}
+
+    s = Solver(path='foo', mock=True)
+
+    expected = None
+    actual = s._translate_solution(value)
 
     assert actual == expected

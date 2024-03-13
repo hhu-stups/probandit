@@ -85,8 +85,9 @@ class Solver():
         Returns:
         - answer: the answer from the solver
         - info: additional information from the solver.
-          In case of a 'yes' answer, this is a dictionary containing the
-          accompanying variable bindings.
+          - For 'yes' answers:
+            - if predicate is true: a dictionary containing the accompanying bindings
+            - if predicate is false: None
         - time: The time it took to solve the predicate. This is usually in
           milliseconds, if the used `prolog_call` is not using different
           time unit.
@@ -102,12 +103,22 @@ class Solver():
             time = self._translate_solution_value(info[self.time_var]['value'])
 
         if info and self.res_var in info:
-            solve_info = self._translate_solution(info[self.res_var],
-                                                  seq_as_list=sequence_like_as_list)
+            res = info[self.res_var]
+            if res['value'] == 'error':
+                answer = 'error'
+                info = self._read_cli_error()
+            else:
+                info = self._translate_solution(res,
+                                                seq_as_list=sequence_like_as_list)
+        elif answer == 'no':
+            # ProB should print errors to stderr.
+            info = self._read_cli_error()
 
-        return answer, solve_info, time
+        return answer, info, time
 
     def _translate_solution(self, solution, seq_as_list=True):
+        if solution['value'] == 'contradiction_found':
+            return None
         if not solution['type'] == 'compound' or not solution['value'][0] == 'solution':
             raise ValueError(f"Invalid solution format: {solution}")
         solution_list = solution['value'][1][0]
@@ -128,6 +139,8 @@ class Solver():
             # Empty set special case
             return set([])
 
+        if value == 'contradiction_found':
+            return None
         if type(value) is tuple:
             typ = value[0]
             val = value[1]
@@ -191,3 +204,9 @@ class Solver():
             bseq.append(d[i])
 
         return bseq
+
+    def _read_cli_error(self):
+        info = self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+        info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+        info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+        return info
