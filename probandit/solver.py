@@ -52,6 +52,8 @@ class Solver():
         self.time_var = self.config.get('call_time_var', 'Msec')
 
         self._cli_args = []
+        if isinstance(self.preferences, dict):
+            self.preferences = [self.preferences]
         for pref in self.preferences:
             # Prefs can be strings or dicts
             if isinstance(pref, dict):
