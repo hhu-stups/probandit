@@ -95,6 +95,24 @@ The respective solver configuration options are as follows:
   Examples include:
   `PROB`, `KODKOD`, `Z3`, `Z3AXM`, `Z3CNS`, and `CDCLT`.
 
+* `prolog_call` _(Optional)_:
+  The ProB2-Interface prolog call attempted by the solver to solve a given
+  predicate in Prolog-AST representation.
+  The call-string supports the use of the variables `$pred` and `$base`,
+  which are substituted with the predicate to solve and with the base solver,
+  respectively.
+
+  This value defaults to `cbc_timed_solve_with_opts($base,_,$pred,_,Res,Msec)`.
+
+* `call_result_var` _(Optional)_:
+  The variable used in the `prolog_call` which will bind to the solving result.
+  Defaults to `Res`.
+
+* `call_time_var` _(Optional)_:
+  The variable used in the `prolog_call` which will bind to the solving time.
+  Defaults to `Msec`.
+
+
 ## References
 
 The original ProB BanditFuzz article. This work is an extension in that it

@@ -20,7 +20,14 @@ class Solver():
         - preferences (optional): a list of ProBCli preferences
         - prolog_call (optional): the Prolog call used to evaluate a predicate.
             - Use $pred as a placeholder for the predicate
+            - Use $base as a placeholder for the base solver
             - Default is 'prob2_interface:cbc_timed_solve_with_opts/6'
+        - call_result_var (optional): the name of the variable in the Prolog
+            call that contains the result
+            - Default is 'Res'
+        - call_time_var (optional): the name of the variable in the Prolog call
+            that contains the time it took to solve the predicate
+            - Default is 'Msec'
         """
         self.config = solver_config
 
