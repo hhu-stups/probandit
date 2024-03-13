@@ -65,7 +65,7 @@ class Solver():
         self.port = None
 
 
-    def solve(self, predicate):
+    def solve(self, predicate, sequence_like_as_list=True):
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
 
@@ -73,11 +73,12 @@ class Solver():
         answer, info = self.cli.receive_prolog()
 
         if info and self.res_var in info:
-            info = self._translate_solution(info[self.res_var])
+            info = self._translate_solution(info[self.res_var],
+                                            seq_as_list=sequence_like_as_list)
 
         return answer, info
 
-    def _translate_solution(self, solution):
+    def _translate_solution(self, solution, seq_as_list=True):
         if not solution['type'] == 'compound' or not solution['value'][0] == 'solution':
             raise ValueError(f"Invalid solution format: {solution}")
         solution_list = solution['value'][1][0]
@@ -88,11 +89,12 @@ class Solver():
             binding_data = binding['value'][1]
             identifier = binding_data[0]['value']
             value = self._translate_solution_value(binding_data[1]['value'],
-                                                   binding_data[2]['value'])
+                                                   binding_data[2]['value'],
+                                                   seq_as_list=seq_as_list)
             solution_dict[identifier] = value
         return solution_dict
 
-    def _translate_solution_value(self, value, pprint=None):
+    def _translate_solution_value(self, value, pprint=None, seq_as_list=True):
         if pprint ==  '{}':
             # Empty set special case
             return set([])
@@ -107,10 +109,10 @@ class Solver():
             elif typ == 'avl_set':
                 bset =  set(self._translate_avl_set(val[0]))
                 # This could be a sequence.
-                if bseq := self._translate_bseq(bset):
-                    return bseq
-                else:
-                    return bset
+                if seq_as_list:
+                    if bseq := self._translate_bseq(bset):
+                        return bseq
+                return bset
             elif typ == 'string':
                 return val[0]['value']
             elif typ == 'term':
