@@ -91,11 +91,16 @@ class Solver():
         - answer: the answer from the solver
         - info: additional information from the solver.
           - For 'yes' answers:
-            - if predicate is true: a dictionary containing the accompanying bindings
-            - if predicate is false: None
+            - Info is a tuple (type, bindings)
+            - type can be 'solution', 'contradiction_found', 'time_out',
+              'no_solution_found', or 'error'
+            - For 'solution' type, bindings is a dictionary with the
+              respective variable bindings
+            - For 'error' type, bindings is a string with the error message
         - time: The time it took to solve the predicate. This is usually in
           milliseconds, if the used `prolog_call` is not using different
-          time unit.
+          time unit. The value -1 indicates that the time measurement was not
+          possible.
         """
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
@@ -108,14 +113,26 @@ class Solver():
         if info and self.time_var in info:
             time = self._translate_solution_value(info[self.time_var]['value'])
 
-        if info and self.res_var in info:
+        if answer == 'yes' and info and self.res_var in info:
             res = info[self.res_var]
-            if res['value'] == 'error':
-                answer = 'error'
-                info = self._read_cli_error()
+
+            yes_type = res['value']
+            yes_info = None
+
+            if yes_type == 'contradiction_found':
+                ...
+            elif yes_type == 'time_out':
+                ...
+            elif isinstance(yes_type, tuple) and yes_type[0] == 'no_solution_found':
+                yes_info = yes_type[1]
+                yes_type = yes_type[0]
+            elif yes_type == 'error':
+                yes_info = self._read_cli_error()
             else:
-                info = self._translate_solution(res,
+                yes_info = self._translate_solution(res,
                                                 seq_as_list=sequence_like_as_list)
+
+            info = (yes_type, yes_info)
         elif answer == 'no':
             # ProB should print errors to stderr.
             info = self._read_cli_error()
@@ -123,8 +140,6 @@ class Solver():
         return answer, info, time
 
     def _translate_solution(self, solution, seq_as_list=True):
-        if solution['value'] == 'contradiction_found':
-            return None
         if not solution['type'] == 'compound' or not solution['value'][0] == 'solution':
             raise ValueError(f"Invalid solution format: {solution}")
         solution_list = solution['value'][1][0]
