@@ -66,6 +66,21 @@ class Solver():
 
 
     def solve(self, predicate, sequence_like_as_list=True):
+        """
+        Attempt to solve the given predicate and return the answer
+
+        Parameters:
+        - predicate: the predicate to solve as string in ASCII B syntax
+        - sequence_like_as_list: if True, translate sets which correspond
+          to sequences into lists. For instance, "f:{1,2}-->{1,2}" would
+          have the solution 'f': [1, 1] instead of 'f': {(1,1), (2,1)}.
+
+        Returns:
+        - answer: the answer from the solver
+        - info: additional information from the solver.
+          In case of a 'yes' answer, this is a dictionary containing the
+          accompanying variable bindings.
+        """
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
 
