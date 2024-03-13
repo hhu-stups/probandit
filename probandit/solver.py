@@ -4,6 +4,7 @@ import socket
 import probcli.answerparser as answerparser
 from probcli import ProBCli
 
+
 class Solver():
 
     def __init__(self, path, **solver_config):
@@ -17,7 +18,7 @@ class Solver():
             - one of 'PROB', 'KODKOD', 'Z3', 'Z3AXM', 'Z3CNS', 'CDCLT'
             - Default is 'PROB'
         - preferences (optional): a list of ProBCli preferences
-        - pred_call (optional): the Prolog call used to evaluate a predicate.
+        - prolog_call (optional): the Prolog call used to evaluate a predicate.
             - Use $pred as a placeholder for the predicate
             - Default is 'prob2_interface:cbc_timed_solve_with_opts/6'
         """
@@ -36,10 +37,12 @@ class Solver():
         self.preferences = self.config.get('preferences', [])
         self.base_solver = self.config.get('base_solver', '\'PROB\'')
 
-        self.pred_call = self.config.get('pred_call', None)
+        self.pred_call = self.config.get('prolog_call', None)
         if self.pred_call is None:
-            self.pred_call = f'cbc_timed_solve_with_opts({self.base_solver},_,$pred,_,Res,Msec)'
+            self.pred_call = f'cbc_timed_solve_with_opts($base,_,$pred,_,Res,Msec)'
+            self.pred_call = self.pred_call.replace('$base', self.base_solver)
         self.res_var = self.config.get('call_result_var', 'Res')
+        self.time_var = self.config.get('call_time_var', 'Msec')
 
         self._cli_args = []
         for pref in self.preferences:
@@ -54,16 +57,13 @@ class Solver():
 
         self.cli = ProBCli(self.path)
 
-
     def start(self, port=None, cli_args=[]):
         used_port = self.cli.start(port, cli_args)
         self.port = used_port
 
-
     def close(self):
         self.cli.close()
         self.port = None
-
 
     def solve(self, predicate, sequence_like_as_list=True):
         """
@@ -80,6 +80,9 @@ class Solver():
         - info: additional information from the solver.
           In case of a 'yes' answer, this is a dictionary containing the
           accompanying variable bindings.
+        - time: The time it took to solve the predicate. This is usually in
+          milliseconds, if the used `prolog_call` is not using different
+          time unit.
         """
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
@@ -87,11 +90,15 @@ class Solver():
         self.cli.send_prolog(query)
         answer, info = self.cli.receive_prolog()
 
-        if info and self.res_var in info:
-            info = self._translate_solution(info[self.res_var],
-                                            seq_as_list=sequence_like_as_list)
+        time = -1
+        if info and self.time_var in info:
+            time = self._translate_solution_value(info[self.time_var]['value'])
 
-        return answer, info
+        if info and self.res_var in info:
+            solve_info = self._translate_solution(info[self.res_var],
+                                                  seq_as_list=sequence_like_as_list)
+
+        return answer, solve_info, time
 
     def _translate_solution(self, solution, seq_as_list=True):
         if not solution['type'] == 'compound' or not solution['value'][0] == 'solution':
@@ -110,7 +117,7 @@ class Solver():
         return solution_dict
 
     def _translate_solution_value(self, value, pprint=None, seq_as_list=True):
-        if pprint ==  '{}':
+        if pprint == '{}':
             # Empty set special case
             return set([])
 
@@ -122,7 +129,7 @@ class Solver():
             elif typ == 'floating':
                 return val[0]['value']
             elif typ == 'avl_set':
-                bset =  set(self._translate_avl_set(val[0]))
+                bset = set(self._translate_avl_set(val[0]))
                 # This could be a sequence.
                 if seq_as_list:
                     if bseq := self._translate_bseq(bset):
@@ -137,7 +144,6 @@ class Solver():
                 lhs = self._translate_solution_value(val[0]['value'])
                 rhs = self._translate_solution_value(val[1]['value'])
                 return (lhs, rhs)
-
         return value
 
     def _translate_avl_set(self, value) -> list:
