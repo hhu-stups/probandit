@@ -1,3 +1,4 @@
+import logging
 import os
 import socket
 
@@ -129,6 +130,7 @@ class Solver():
             elif yes_type == 'error':
                 yes_info = self._read_cli_error()
             else:
+                yes_type = 'solution'
                 yes_info = self._translate_solution(res,
                                                 seq_as_list=sequence_like_as_list)
 
@@ -149,6 +151,7 @@ class Solver():
         for binding in solution_list:
             binding_data = binding['value'][1]
             identifier = binding_data[0]['value']
+            logging.debug("Translating binding: %s", binding_data)
             value = self._translate_solution_value(binding_data[1]['value'],
                                                    binding_data[2]['value'],
                                                    seq_as_list=seq_as_list)
@@ -158,7 +161,9 @@ class Solver():
     def _translate_solution_value(self, value, pprint=None, seq_as_list=True):
         if pprint == '{}':
             # Empty set special case
-            return set([])
+            return frozenset()
+        elif value == []:
+            return frozenset(frozenset())
 
         if value == 'contradiction_found':
             return None
@@ -170,7 +175,7 @@ class Solver():
             elif typ == 'floating':
                 return val[0]['value']
             elif typ == 'avl_set':
-                bset = set(self._translate_avl_set(val[0]))
+                bset = frozenset(self._translate_avl_set(val[0]))
                 # This could be a sequence.
                 if seq_as_list:
                     if bseq := self._translate_bseq(bset):
@@ -185,6 +190,10 @@ class Solver():
                 lhs = self._translate_solution_value(val[0]['value'])
                 rhs = self._translate_solution_value(val[1]['value'])
                 return (lhs, rhs)
+            elif typ == 'global_set':
+                return val[0]['value']
+            else:
+                raise ValueError(f"Unknown type: {typ}; value: {val}")
         return value
 
     def _translate_avl_set(self, value) -> list:
@@ -224,7 +233,7 @@ class Solver():
                 return None
             bseq.append(d[i])
 
-        return bseq
+        return tuple(bseq)
 
     def _read_cli_error(self):
         info = self.cli.cli_process.stderr.readline().decode('utf-8').strip()

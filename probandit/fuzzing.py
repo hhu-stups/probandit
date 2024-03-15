@@ -5,17 +5,6 @@ import subprocess
 import time
 
 
-def run_sicstus(command, load_file=None):
-    args = ['sicstus']
-    if load_file:
-        args += ['-l', load_file]
-    if command[-1] == '.':
-        command = command[:-1]
-    args += ['--goal', command + ',halt.']
-
-    return subprocess.check_output(args, stderr=subprocess.PIPE).decode('utf-8').strip()
-
-
 class BFuzzer():
     def __init__(self, bf_path):
         self.path = bf_path
@@ -92,8 +81,8 @@ class BFuzzer():
         answer = self._receive_from_socket()
         # Answer is three lines: mutated AST, WD predicate, and environment
         lines = answer.split('\n')
-        raw = _deatomify(lines[0][len('Raw: '):])
-        wd = lines[1][len('WD: '):]
+        raw = lines[0][len('Raw: '):]
+        wd = _deatomify(lines[1][len('WD: '):])
         new_env = lines[2][len('Env: '):]
 
         return wd, raw, new_env
@@ -130,8 +119,6 @@ class BFuzzer():
         [x, y, z, b] = answer.split(',')
         return int(x), int(y), int(z), int(b)
 
-
-
     def _send_to_socket(self, message):
         # Ensure message ends with '.\n'
         if message[-1] != '\n':
@@ -164,5 +151,7 @@ class BFuzzer():
 
 
 def _deatomify(string):
-    # Remove outer quotes
-    return string[1:-1]
+    # Remove outer quotes if present
+    if string[0] == "'" and string[-1] == "'":
+        string = string[1:-1]
+    return string.replace("\\\\", "\\")
