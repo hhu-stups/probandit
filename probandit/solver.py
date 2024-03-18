@@ -95,7 +95,7 @@ class Solver():
         self.close()
         self.start(port)
 
-    def solve(self, predicate, sequence_like_as_list=True):
+    def solve(self, predicate, sequence_like_as_list=True, par2=False):
         """
         Attempt to solve the given predicate and return the answer
 
@@ -104,6 +104,7 @@ class Solver():
         - sequence_like_as_list: if True, translate sets which correspond
           to sequences into lists. For instance, "f:{1,2}-->{1,2}" would
           have the solution 'f': [1, 1] instead of 'f': {(1,1), (2,1)}.
+        - par2: if True, the returned time is the par2 score of the solver
 
         Returns:
         - answer: the answer from the solver
@@ -155,6 +156,12 @@ class Solver():
         elif answer == 'no':
             # ProB should print errors to stderr.
             info = self._read_cli_error()
+
+        if par2:
+            if answer != 'yes':
+                time += self.solver_timeout
+            elif info[0] not in ['solution', 'contradiction_found']:
+                time += self.solver_timeout
 
         return answer, info, time
 

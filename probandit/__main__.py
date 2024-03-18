@@ -125,8 +125,8 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
 
     # Get min ref and max target time
     penalty = target_solvers[0].solver_timeout
-    ref_time = max([par2(res, penalty) for res in ref_results.values()])
-    tar_time = min([par2(res, penalty) for res in tar_results.values()])
+    ref_time = max([time for (answer, info, time) in ref_results.values()])
+    tar_time = min([time for (answer, info, time) in tar_results.values()])
 
     new_performance_margin = tar_time - ref_time
 
@@ -144,7 +144,7 @@ def eval_solvers(solvers, pred, env, samp_size=1):
             if samp_size > 1:
                 time_sum = time
                 for _ in range(samp_size - 1):
-                    _, _, new_time = solver.solve(pred, env)
+                    _, _, new_time = solver.solve(pred, env, par2=True)
                     time_sum += new_time
                 time = ceil(time_sum / samp_size)
             results[solver.id] = (answer, info, time)
@@ -157,20 +157,6 @@ def eval_solvers(solvers, pred, env, samp_size=1):
             solver.restart()
             return None
     return results
-
-
-def par2(result, penalty):
-    (answer, info, time) = result
-
-    if answer != 'yes':
-        return time + penalty
-
-    yes_type = info[0]
-    if yes_type not in ['solution', 'contradiction_found']:
-        return time + penalty
-
-    return time
-
 
 
 def report_results(results, label='Results'):
@@ -192,6 +178,7 @@ def write_results(csv, pred, raw_ast, results, margin, sids):
             line += ","
     line += f"{pred},{raw_ast}\n"
     csv.write(line)
+    csv.flush()
 
 
 def correct_bf_path(bf_path):
