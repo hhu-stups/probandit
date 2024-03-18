@@ -215,3 +215,4 @@ pyrightconfig.json
 prob_dists/
 test.yml
 run_example.py
+*.csv

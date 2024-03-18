@@ -14,6 +14,9 @@ fuzzer:
   options:
     - size(5)
 
+  # Target file to keep the generated benchmarks
+  csv: out.csv
+
 
 solvers:
   # The solvers can be defined with arbitrary but unique names.

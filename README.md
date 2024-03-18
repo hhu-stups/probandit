@@ -31,6 +31,7 @@ fuzzer:
     - <solver list>
   options:
     - <option list>
+  csv: <path string>
 
 solvers:
   <solver name>:
@@ -42,7 +43,7 @@ solvers:
 * `path`: Directory path to the ProB version with the desired fuzzer
   implementation. This does not necessarily have to be a ProB version which is
   used as target or reference solver.
-  Rather, this instance is queried for the Banditfuzz generator and mutator
+  Rather, this instance is queried for the BanditFuzz generator and mutator
   capabilities to create and manipulate inputs for the solvers under test.
 
   **Note:** Available environment variables can be used and will be expanded,
@@ -52,9 +53,11 @@ solvers:
   need to be defined under the `solvers:`-section (see below).
 * `references`: A list of reference solvers to use in this ProBandit run. The
   solvers need to be defined under the `solvers:`-section (see below).
-* `options`: A list of options that is forwarded to the Banditfuzz
+* `options` _(Optional)_: A list of options that is forwarded to the BanditFuzz
   implementation linked under the `path` setting. See the respective
   readme for more information as of which options are available.
+* `csv` _(Optional)_: Name of the target CSV file into which BanditFuzz writes
+  the found benchmark results. The value defaults to `results.csv`
 
 ### Solver configuration
 

@@ -3,33 +3,61 @@ import os
 import sys
 import yaml
 
+from probandit.agents import BfAgent
 from probandit.fuzzing import BFuzzer
 from probandit.solver import Solver
 
 logging.basicConfig(level=logging.INFO)
 
 
-def run_bf(bfuzzer, target_solvers, reference_solvers):
+def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
     bfuzzer.connect()
     bfuzzer.init_random_state()
 
-    pred, raw_ast, env, margin = bf_iteration(bfuzzer, None, None, None,
-                                              target_solvers,
-                                              reference_solvers)
+    pred, raw_ast, env, best_margin, results = bf_iteration(bfuzzer,
+                                                            None, None, None,
+                                                            target_solvers,
+                                                            reference_solvers)
 
-    for i in range(10):
-        new_data = bf_iteration(bfuzzer, raw_ast, env, None,
+    sids = merged_solver_ids(target_solvers, reference_solvers)
+    write_results(csv, pred, raw_ast, results, best_margin, sids)
+
+    actions = bfuzzer.list_actions(env)
+
+    outer_agent = BfAgent(actions=['mutate', 'generate'])
+    inner_agent = BfAgent(actions=actions)
+
+    for i in range(30):
+        outer_action = outer_agent.sample_action()
+        if outer_action == 'mutate':
+            mutation = inner_agent.sample_action()
+        else:
+            mutation = None
+
+        logging.info("Action: (%s, %s)", outer_action, mutation)
+
+        new_data = bf_iteration(bfuzzer, raw_ast, env, mutation,
                                 target_solvers,
                                 reference_solvers)
 
         if new_data is None:
             logging.warning("Skipped iteration due to solver error")
             continue
-        new_pred, new_raw_ast, new_env, new_margin = new_data
+        new_pred, new_raw_ast, new_env, new_margin, results = new_data
 
-        if new_margin > margin:
+        if new_margin > best_margin:
             logging.info("New best performance margin: %dms", new_margin)
-            pred, raw_ast, env, margin = new_data
+            pred, raw_ast, env = new_pred, new_raw_ast, new_env
+            best_margin = new_margin
+            write_results(csv, pred, raw_ast, results, best_margin, sids)
+
+            reward = 1
+        else:
+            reward = 0
+
+        outer_agent.receive_reward(outer_action, reward)
+        if mutation:
+            inner_agent.receive_reward(mutation, reward)
 
 
 def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers):
@@ -58,7 +86,9 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
 
     new_performance_margin = tar_time - ref_time
 
-    return pred, raw_ast, env, new_performance_margin
+    solver_results = ref_results | tar_results
+
+    return pred, raw_ast, env, new_performance_margin, solver_results
 
 
 def eval_solvers(solvers, pred, env):
@@ -83,6 +113,17 @@ def report_results(results, label='Results'):
     logging.info(f"{label}: {result_line}")
 
 
+def write_results(csv, pred, raw_ast, results, margin, sids):
+    line = f"{margin},"
+    for sid in sids:
+        if sid in results:
+            line += f"{results[sid][2]},"
+        else:
+            line += ","
+    line += f"{pred},{raw_ast}\n"
+    csv.write(line)
+
+
 def correct_bf_path(bf_path):
     if not os.path.exists(bf_path):
         raise ValueError(
@@ -96,6 +137,11 @@ def correct_bf_path(bf_path):
         return os.path.join(bf_path, 'extensions', 'banditfuzz', 'banditfuzz.pl')
     else:
         return bf_path
+
+
+def merged_solver_ids(target_solvers, reference_solvers):
+    sids = [s.id for s in reference_solvers] + [s.id for s in target_solvers]
+    return sorted(sids)
 
 
 if __name__ == '__main__':
@@ -126,4 +172,12 @@ if __name__ == '__main__':
     for solver in reference_solvers:
         solver.start()
 
-    run_bf(bfuzzer, target_solvers, reference_solvers)
+    outfile = config['fuzzer'].get('csv', 'results.csv')
+
+    with open(outfile, 'w') as csv:
+        sids = merged_solver_ids(target_solvers, reference_solvers)
+        header = 'margin,'
+        header += ','.join(sids)
+        header += ',pred,raw_ast\n'
+        csv.write(header)
+        run_bf(bfuzzer, target_solvers, reference_solvers, csv)
