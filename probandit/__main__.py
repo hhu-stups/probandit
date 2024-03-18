@@ -27,6 +27,12 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
     outer_agent = BfAgent(actions=['mutate', 'generate'])
     inner_agent = BfAgent(actions=actions)
 
+    solution_filter = None
+    if 'solutions_only' in bfuzzer.options:
+        solution_filter = 'solutions_only'
+    elif 'min_one_solution' in bfuzzer.options:
+        solution_filter = 'min_one_solution'
+
     while True:
         outer_action = outer_agent.sample_action()
         if outer_action == 'mutate':
@@ -45,7 +51,31 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
             continue
         new_pred, new_raw_ast, new_env, new_margin, results = new_data
 
-        if new_margin > best_margin:
+        # Check if solution filter applies
+        filter_applies = False
+        if solution_filter:
+            yes_types = set()
+            for (answer, info, time) in results.values():
+                if answer == 'yes':
+                    typ = info[0]
+                    if solution_filter == 'solutions_only':
+                        if typ not in ['solution', 'contradiction_found']:
+                            filter_applies = True
+                    yes_types.add(info[0])
+                elif solution_filter == 'solutions_only':
+                    filter_applies = True
+
+            if solution_filter == 'min_one_solution':
+                has_contraduction = 'contradiction_found' in yes_types
+                has_solution = 'solution' in yes_types
+                if not (has_contraduction and has_solution):
+                    filter_applies = True
+
+            if filter_applies:
+                logging.info("Ignore results due to solution filter %s",
+                             solution_filter)
+
+        if not filter_applies and new_margin > best_margin:
             logging.info("New best performance margin: %dms", new_margin)
             pred, raw_ast, env = new_pred, new_raw_ast, new_env
             best_margin = new_margin
