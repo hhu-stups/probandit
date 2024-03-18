@@ -124,8 +124,9 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     report_results(tar_results, label='Target')
 
     # Get min ref and max target time
-    ref_time = max([time for (answer, info, time) in ref_results.values()])
-    tar_time = min([time for (answer, info, time) in tar_results.values()])
+    penalty = target_solvers[0].solver_timeout
+    ref_time = max([par2(res, penalty) for res in ref_results.values()])
+    tar_time = min([par2(res, penalty) for res in tar_results.values()])
 
     new_performance_margin = tar_time - ref_time
 
@@ -156,6 +157,20 @@ def eval_solvers(solvers, pred, env, samp_size=1):
             solver.restart()
             return None
     return results
+
+
+def par2(result, penalty):
+    (answer, info, time) = result
+
+    if answer != 'yes':
+        return time + penalty
+
+    yes_type = info[0]
+    if yes_type not in ['solution', 'contradiction_found']:
+        return time + penalty
+
+    return time
+
 
 
 def report_results(results, label='Results'):

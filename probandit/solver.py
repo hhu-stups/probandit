@@ -70,6 +70,14 @@ class Solver():
 
         self.cli = ProBCli(self.path)
 
+        self.solver_timeout = 2500
+        for i, arg in enumerate(self._cli_args):
+            if arg == '-p':
+                key = self._cli_args[i+1]
+                if key.lower() in ['time_out', 'timeout']:
+                    self.solver_timeout = int(self._cli_args[i+2])
+                    break
+
     def start(self, port=None):
         used_port = self.cli.start(port, self._cli_args)
         self.port = used_port
