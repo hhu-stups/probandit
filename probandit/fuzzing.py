@@ -10,7 +10,9 @@ class BFuzzer():
         self.path = bf_path
         self.process = None
         self._socket = None
+
         self.options = options
+        self._prolog_option_string = '[' + ','.join(options) + ']'
 
 
     def connect(self, existing_port=None):
@@ -65,7 +67,7 @@ class BFuzzer():
         env : str
             The environment in which the B constraint was generated.
         """
-        self._send_to_socket('generate.')
+        self._send_to_socket(f'generate({self._prolog_option_string}).')
         answer = self._receive_from_socket()
         # Answer is three lines: generated AST, WD predicate, and environment
         lines = answer.split('\n')
