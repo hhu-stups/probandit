@@ -1,6 +1,5 @@
 import logging
 import os
-import socket
 
 import probcli.answerparser as answerparser
 from probcli import ProBCli
@@ -71,13 +70,22 @@ class Solver():
 
         self.cli = ProBCli(self.path)
 
-    def start(self, port=None, cli_args=[]):
-        used_port = self.cli.start(port, cli_args)
+    def start(self, port=None):
+        used_port = self.cli.start(port, self._cli_args)
         self.port = used_port
+
+    def with_cli_at(self, port):
+        self.cli = ProBCli(self.path)
+        self.cli.connect(port)
+        self.port = port
 
     def close(self):
         self.cli.close()
         self.port = None
+
+    def restart(self, port=None):
+        self.close()
+        self.start(port)
 
     def solve(self, predicate, sequence_like_as_list=True):
         """
@@ -237,7 +245,10 @@ class Solver():
         return tuple(bseq)
 
     def _read_cli_error(self):
-        info = self.cli.cli_process.stderr.readline().decode('utf-8').strip()
-        info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
-        info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+        try:
+            info = self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+            info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+            info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
+        except TimeoutError:
+            info = "No error message available"
         return info

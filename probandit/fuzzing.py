@@ -35,6 +35,7 @@ class BFuzzer():
         logging.debug('Connecting to socket on port %d', self.port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect(('localhost', self.port))
+        self._socket.settimeout(60)
         logging.debug('Connected to BanditFuzz')
 
     def disconnect(self):
@@ -46,6 +47,10 @@ class BFuzzer():
             self.process.terminate()
             self.process.wait()
         self.process = None
+
+    def restart(self):
+        self.disconnect()
+        self.connect()
 
     def generate(self):
         """
@@ -137,8 +142,9 @@ class BFuzzer():
     def _receive_from_socket(self):
         data = b''
         while True:
-            data += self._socket.recv(1024)
-            if b'\x00' in data:
+            chunk = self._socket.recv(1024)
+            data += chunk
+            if b'\x00' in chunk:
                 break
         data = data.decode('utf-8').strip('\x00')
 

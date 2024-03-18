@@ -27,7 +27,7 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
     outer_agent = BfAgent(actions=['mutate', 'generate'])
     inner_agent = BfAgent(actions=actions)
 
-    for i in range(30):
+    while True:
         outer_action = outer_agent.sample_action()
         if outer_action == 'mutate':
             mutation = inner_agent.sample_action()
@@ -63,10 +63,16 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
 def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers):
     x, y, z, b = bfuzzer.get_random_state()
     logging.info("Prolog RNG: random(%d,%d,%d,%d)", x, y, z, b)
-    if mutation == None:
-        pred, raw_ast, env = bfuzzer.generate()
-    else:
-        pred, raw_ast, env = bfuzzer.mutate(raw_ast, env, mutation)
+
+    try:
+        if mutation == None:
+            pred, raw_ast, env = bfuzzer.generate()
+        else:
+            pred, raw_ast, env = bfuzzer.mutate(raw_ast, env, mutation)
+    except TimeoutError:
+        logging.error("Timeout error for mutation '%s'", mutation)
+        bfuzzer.restart()
+        return None
 
     logging.info("Next predicate: %s", pred)
     logging.info("Raw AST: %s", raw_ast)
@@ -98,6 +104,11 @@ def eval_solvers(solvers, pred, env):
             answer, info, time = solver.solve(pred, env)
         except ValueError as e:
             logging.error("Parse error for %s over %s: %s", solver.id, pred, e)
+            solver.restart()
+            return None
+        except TimeoutError:
+            logging.error("Timeout error for %s over %s", solver.id, pred)
+            solver.restart()
             return None
         results[solver.id] = (answer, info, time)
     return results

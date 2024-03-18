@@ -49,6 +49,7 @@ class ProBCli():
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect(('localhost', used_port))
+        self._socket.settimeout(60)
 
         self.is_connected = True
 
@@ -57,6 +58,18 @@ class ProBCli():
         self.parser = BParser(parser_path)
 
         return used_port
+
+    def connect(self, port):
+        self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._socket.connect(('localhost', port))
+        self._socket.settimeout(60)
+
+        self.is_connected = True
+
+        parser_path = os.path.join(os.path.dirname(self.path),
+                                   'lib', 'probcliparser.jar')
+        self.parser = BParser(parser_path)
+
 
     def close(self):
         if not self.is_connected:
