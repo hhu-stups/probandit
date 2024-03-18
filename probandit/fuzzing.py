@@ -6,10 +6,12 @@ import time
 
 
 class BFuzzer():
-    def __init__(self, bf_path):
+    def __init__(self, bf_path, options=[]):
         self.path = bf_path
         self.process = None
         self._socket = None
+        self.options = options
+
 
     def connect(self, existing_port=None):
         if not existing_port:

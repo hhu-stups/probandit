@@ -8,7 +8,7 @@ from probcli import ProBCli
 
 class Solver():
 
-    def __init__(self, path, **solver_config):
+    def __init__(self, path, id=None, **solver_config):
         """
         Create a new Solver object. The configuration is a dictionary with
         the following keys (also see the solver configuration section in the
@@ -33,6 +33,7 @@ class Solver():
             - Default is 'Msec'
         """
         self.config = solver_config
+        self.id = id
 
         if 'mock' in solver_config and solver_config['mock']:  # For unit tests
             self.path = path
