@@ -1,4 +1,5 @@
 import logging
+from math import ceil
 import os
 import sys
 import yaml
@@ -14,10 +15,16 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
     bfuzzer.connect()
     bfuzzer.init_random_state()
 
+    samp_size = 1
+    for opt in bfuzzer.options:
+        if opt.startswith('samp_size('):
+            samp_size = int(opt.strip().split('(')[1][:-1])
+
     pred, raw_ast, env, best_margin, results = bf_iteration(bfuzzer,
                                                             None, None, None,
                                                             target_solvers,
-                                                            reference_solvers)
+                                                            reference_solvers,
+                                                            samp_size)
 
     sids = merged_solver_ids(target_solvers, reference_solvers)
     write_results(csv, pred, raw_ast, results, best_margin, sids)
@@ -90,7 +97,7 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
             inner_agent.receive_reward(mutation, reward)
 
 
-def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers):
+def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers, samp_size=1):
     x, y, z, b = bfuzzer.get_random_state()
     logging.info("Prolog RNG: random(%d,%d,%d,%d)", x, y, z, b)
 
@@ -107,8 +114,8 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     logging.info("Next predicate: %s", pred)
     logging.info("Raw AST: %s", raw_ast)
 
-    ref_results = eval_solvers(reference_solvers, pred, env)
-    tar_results = eval_solvers(target_solvers, pred, env)
+    ref_results = eval_solvers(reference_solvers, pred, env, samp_size)
+    tar_results = eval_solvers(target_solvers, pred, env, samp_size)
 
     if ref_results is None or tar_results is None:
         return None
@@ -127,11 +134,19 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     return pred, raw_ast, env, new_performance_margin, solver_results
 
 
-def eval_solvers(solvers, pred, env):
+def eval_solvers(solvers, pred, env, samp_size=1):
     results = {}
     for solver in solvers:
         try:
+            logging.debug("Solving with %s", solver.id)
             answer, info, time = solver.solve(pred, env)
+            if samp_size > 1:
+                time_sum = time
+                for _ in range(samp_size - 1):
+                    _, _, new_time = solver.solve(pred, env)
+                    time_sum += new_time
+                time = ceil(time_sum / samp_size)
+            results[solver.id] = (answer, info, time)
         except ValueError as e:
             logging.error("Parse error for %s over %s: %s", solver.id, pred, e)
             solver.restart()
@@ -140,7 +155,6 @@ def eval_solvers(solvers, pred, env):
             logging.error("Timeout error for %s over %s", solver.id, pred)
             solver.restart()
             return None
-        results[solver.id] = (answer, info, time)
     return results
 
 
