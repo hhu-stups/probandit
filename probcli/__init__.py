@@ -49,7 +49,7 @@ class ProBCli():
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect(('localhost', used_port))
-        self._socket.settimeout(60)
+        self._socket.settimeout(400)  # Sicstus 4.8.0 bug caused runtimes >200s
 
         self.is_connected = True
 
