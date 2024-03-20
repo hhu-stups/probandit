@@ -95,6 +95,9 @@ class Solver():
         self.close()
         self.start(port)
 
+    def interrupt(self):
+        self.cli.send_interrupt()
+
     def solve(self, predicate, sequence_like_as_list=True, par2=False):
         """
         Attempt to solve the given predicate and return the answer

@@ -12,9 +12,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
-    bfuzzer.connect()
-    bfuzzer.init_random_state()
-
     samp_size = 1
     for opt in bfuzzer.options:
         if opt.startswith('samp_size('):
@@ -169,11 +166,10 @@ def eval_solvers(solvers, pred, env, samp_size=1):
             results[solver.id] = (answer, info, time)
         except ValueError as e:
             logging.error("Parse error for %s over %s: %s", solver.id, pred, e)
-            solver.restart()
             return None
         except TimeoutError:
             logging.error("Timeout error for %s over %s", solver.id, pred)
-            solver.restart()
+            solver.interrupt()
             return None
     return results
 
@@ -195,7 +191,7 @@ def write_results(csv, pred, raw_ast, results, margin, sids):
             line += f"{results[sid][2]},"
         else:
             line += ","
-    line += f"{pred},\"{raw_ast}\"\n"
+    line += f"\"{pred}\",\"{raw_ast}\"\n"
     csv.write(line)
     csv.flush()
 
@@ -235,6 +231,11 @@ if __name__ == '__main__':
 
     bfuzzer = BFuzzer(bf_path=bf_path,
                       options=config['fuzzer'].get('options', []))
+
+    port = config['fuzzer'].get('port', None)
+    bfuzzer.connect(existing_port=port)
+    bfuzzer.init_random_state()
+
 
     target_is = config['fuzzer']['targets']
     target_solvers = [Solver(id=id, **(config['solvers'][id]))
