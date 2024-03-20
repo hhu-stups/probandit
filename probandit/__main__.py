@@ -8,7 +8,7 @@ from probandit.agents import BfAgent
 from probandit.fuzzing import BFuzzer
 from probandit.solver import Solver
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 
 def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
@@ -131,9 +131,10 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     logging.info("Raw AST: %s", raw_ast)
 
     ref_results = eval_solvers(reference_solvers, pred, env, samp_size)
+    if ref_results is None:
+        return None
     tar_results = eval_solvers(target_solvers, pred, env, samp_size)
-
-    if ref_results is None or tar_results is None:
+    if tar_results is None:
         return None
 
     report_results(ref_results, label='Reference')
