@@ -58,6 +58,25 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
             continue
         new_pred, new_raw_ast, new_env, new_margin, results = new_data
 
+        # Check for contradictions
+        solutions = 0
+        contras = 0
+        for res in results.values():
+            if res[0] == 'yes':
+                if res[1][0] == 'solution':
+                    solutions += 1
+                elif res[1][0] == 'contradiction_found':
+                    contras += 1
+
+        if solutions > 0 and contras > 0:
+            yes_results = [f"{k}: {v[1][1]}"
+                            for k, v in results.items() if v[0] == 'yes']
+            yes_line = ', '.join(yes_results)
+            logging.warning("CONTRADICTION FOUND: %s; on %s", yes_line, new_pred)
+            with open('bf_contradictions.txt', 'a') as f:
+                f.write(f"{yes_line}; {new_pred}\n")
+            continue
+
         # Check if solution filter applies
         filter_applies = False
         if solution_filter:
