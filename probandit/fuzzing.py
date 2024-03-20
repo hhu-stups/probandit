@@ -161,6 +161,8 @@ class BFuzzer():
 
 
 def _deatomify(string):
+    if string == '':
+        return "''"
     # Remove outer quotes if present
     if string[0] == "'" and string[-1] == "'":
         string = string[1:-1]
