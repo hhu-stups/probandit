@@ -195,7 +195,7 @@ def write_results(csv, pred, raw_ast, results, margin, sids):
             line += f"{results[sid][2]},"
         else:
             line += ","
-    line += f"{pred},{raw_ast}\n"
+    line += f"{pred},\"{raw_ast}\"\n"
     csv.write(line)
     csv.flush()
 
