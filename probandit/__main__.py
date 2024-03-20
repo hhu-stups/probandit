@@ -152,16 +152,16 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     return pred, raw_ast, env, new_performance_margin, solver_results
 
 
-def eval_solvers(solvers, pred, env, samp_size=1):
+def eval_solvers(solvers, pred, env, samp_size=1, par2=True):
     results = {}
     for solver in solvers:
         try:
-            logging.debug("Solving with %s", solver.id)
-            answer, info, time = solver.solve(pred, env)
+            logging.debug("Solving with %s, x%d", solver.id, samp_size)
+            answer, info, time = solver.solve(pred, env, par2=par2)
             if samp_size > 1:
                 time_sum = time
                 for _ in range(samp_size - 1):
-                    _, _, new_time = solver.solve(pred, env, par2=True)
+                    _, _, new_time = solver.solve(pred, env, par2=par2)
                     time_sum += new_time
                 time = ceil(time_sum / samp_size)
             results[solver.id] = (answer, info, time)
