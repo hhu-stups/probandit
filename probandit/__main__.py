@@ -47,8 +47,8 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
         logging.info("Action: (%s, %s)", outer_action, mutation)
 
         new_data = bf_iteration(bfuzzer, raw_ast, env, mutation,
-                                target_solvers,
-                                reference_solvers)
+                                target_solvers, reference_solvers,
+                                samp_size)
 
         if new_data is None:
             logging.warning("Skipped iteration due to solver error")
