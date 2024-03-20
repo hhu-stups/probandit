@@ -149,7 +149,7 @@ class Solver():
                 yes_info = yes_type[1]
                 yes_type = yes_type[0]
             elif yes_type == 'error':
-                yes_info = self._read_cli_error()
+                yes_info = "ProB error"
             else:
                 yes_type = 'solution'
                 yes_info = self._translate_solution(res,
@@ -158,7 +158,7 @@ class Solver():
             info = (yes_type, yes_info)
         elif answer == 'no':
             # ProB should print errors to stderr.
-            info = self._read_cli_error()
+            info = "Prolog error"
 
         if par2:
             if answer != 'yes':
@@ -261,12 +261,3 @@ class Solver():
             bseq.append(d[i])
 
         return tuple(bseq)
-
-    def _read_cli_error(self):
-        try:
-            info = self.cli.cli_process.stderr.readline().decode('utf-8').strip()
-            info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
-            info += self.cli.cli_process.stderr.readline().decode('utf-8').strip()
-        except TimeoutError:
-            info = "No error message available"
-        return info
