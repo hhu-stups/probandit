@@ -160,7 +160,7 @@ class ProBCli():
         # Start the probcli binary as subprocess
         self.cli_process = subprocess.Popen(call_args,
                                             stdout=subprocess.PIPE,
-                                            stderr=subprocess.PIPE)
+                                            stderr=subprocess.DEVNULL)
 
         # When the cli is starting, it prints 6 lines to stdout
         used_port = self._check_probcli_startup_output(self.cli_process)
