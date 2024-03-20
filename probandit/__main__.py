@@ -8,7 +8,11 @@ from probandit.agents import BfAgent
 from probandit.fuzzing import BFuzzer
 from probandit.solver import Solver
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 
 def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
@@ -156,11 +160,12 @@ def eval_solvers(solvers, pred, env, samp_size=1, par2=True):
     results = {}
     for solver in solvers:
         try:
-            logging.debug("Solving with %s, x%d", solver.id, samp_size)
+            logging.debug("Solving with %s, 1/%d", solver.id, samp_size)
             answer, info, time = solver.solve(pred, env, par2=par2)
             if samp_size > 1:
                 time_sum = time
-                for _ in range(samp_size - 1):
+                for i in range(samp_size - 1):
+                    logging.debug("Solving again, %d/%d", i+2, samp_size)
                     _, _, new_time = solver.solve(pred, env, par2=par2)
                     time_sum += new_time
                 time = ceil(time_sum / samp_size)

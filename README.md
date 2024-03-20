@@ -58,7 +58,7 @@ solvers:
   readme for more information as of which options are available.
 * `csv` _(Optional)_: Name of the target CSV file into which BanditFuzz writes
   the found benchmark results. The value defaults to `results.csv`
-
+ -
 ### Solver configuration
 
 Under the `solvers:`-section, the user can define custom identifiers for
@@ -114,7 +114,6 @@ The respective solver configuration options are as follows:
 * `call_time_var` _(Optional)_:
   The variable used in the `prolog_call` which will bind to the solving time.
   Defaults to `Msec`.
-
 
 ## References
 

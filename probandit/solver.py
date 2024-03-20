@@ -178,7 +178,6 @@ class Solver():
         for binding in solution_list:
             binding_data = binding['value'][1]
             identifier = binding_data[0]['value']
-            logging.debug("Translating binding: %s", binding_data)
             value = self._translate_solution_value(binding_data[1]['value'],
                                                    binding_data[2]['value'],
                                                    seq_as_list=seq_as_list)
