@@ -217,3 +217,5 @@ test.yml
 run_example.py
 *.csv
 experiments/
+probandit.zip
+hpc/

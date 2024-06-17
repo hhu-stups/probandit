@@ -225,11 +225,15 @@ def merged_solver_ids(target_solvers, reference_solvers):
 if __name__ == '__main__':
     # First argument is the config file path
     if len(sys.argv) < 2:
-        print("Usage: python probandit.py <config_file>")
+        print("Usage: python probandit.py <config_file> [<target_csv>]")
         sys.exit(1)
 
     config_file = sys.argv[1]
     config = yaml.safe_load(open(config_file, 'r'))
+
+    if len(sys.argv) > 2:
+        config['fuzzer']['csv'] = sys.argv[2]
+
 
     bf_path = os.path.expandvars(config['fuzzer']['path'])
     bf_path = correct_bf_path(bf_path)

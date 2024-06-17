@@ -15,7 +15,7 @@ Dependencies:
 
 * Python 3.8+
 
-Run with `python3 -m probandit <config file path>`.
+Run with `python3 -m probandit <config file path> [<target csv file>]`.
 
 ## Configuration Files
 
@@ -57,8 +57,11 @@ solvers:
   implementation linked under the `path` setting. See the respective
   readme for more information as of which options are available.
 * `csv` _(Optional)_: Name of the target CSV file into which BanditFuzz writes
-  the found benchmark results. The value defaults to `results.csv`
- -
+  the found benchmark results. The value defaults to `results.csv`.
+
+  If the target csv file is given via command line option, the `csv`
+  property will be ignored.
+
 ### Solver configuration
 
 Under the `solvers:`-section, the user can define custom identifiers for
