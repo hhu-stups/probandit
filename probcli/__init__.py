@@ -1,3 +1,4 @@
+import logging
 import os
 import socket
 import subprocess
@@ -157,6 +158,7 @@ class ProBCli():
 
         call_args += args
 
+        logging.info('Starting probcli with args: %s', call_args)
         # Start the probcli binary as subprocess
         self.cli_process = subprocess.Popen(call_args,
                                             stdout=subprocess.PIPE,
@@ -164,6 +166,7 @@ class ProBCli():
 
         # When the cli is starting, it prints 6 lines to stdout
         used_port = self._check_probcli_startup_output(self.cli_process)
+        logging.info('Started probcli on port %d', used_port)
 
         return used_port
 

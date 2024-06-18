@@ -267,4 +267,5 @@ if __name__ == '__main__':
         header += ','.join(sids)
         header += ',pred,raw_ast\n'
         csv.write(header)
+        csv.flush()
         run_bf(bfuzzer, target_solvers, reference_solvers, csv)
