@@ -251,6 +251,7 @@ if __name__ == '__main__':
     target_solvers = [Solver(id=id, **(config['solvers'][id]))
                       for id in target_is]
     for solver in target_solvers:
+        logging.info('Starting solver %s', solver.id)
         solver.start()
 
     reference_is = config['fuzzer']['references']

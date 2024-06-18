@@ -19,7 +19,7 @@ class BFuzzer():
         if not existing_port:
             args = ['sicstus', '-l', self.path,
                     '--goal', 'banditfuzz:run_bf_socket_server(_), halt.']
-            logging.debug('Starting BFuzzer with args: %s', args)
+            logging.info('Starting BFuzzer with args: %s', args)
             self.process = subprocess.Popen(args,
                                             stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE,
@@ -34,11 +34,11 @@ class BFuzzer():
             self.port = existing_port
 
         # Connect to the socket
-        logging.debug('Connecting to socket on port %d', self.port)
+        logging.info('Connecting to socket on port %d', self.port)
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect(('localhost', self.port))
         self._socket.settimeout(60)
-        logging.debug('Connected to BanditFuzz')
+        logging.info('Connected to BanditFuzz')
 
     def disconnect(self):
         self._send_to_socket('halt.')
