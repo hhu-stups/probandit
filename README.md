@@ -83,7 +83,7 @@ The respective solver configuration options are as follows:
   **Note:** Available environment variables can be used and will be expanded,
   e.g. `$PROBDIR` (or any available variable).
 
-* `preferences` _(Optional)_:
+* `cli_preferences` _(Optional)_:
   List of preferences with which the respective `probcli`
   will be called.
 
@@ -91,7 +91,7 @@ The respective solver configuration options are as follows:
 
   ```yaml
   prob_1.13.0:
-    preferences:
+    cli_preferences:
       - SMT TRUE
   ```
 
@@ -107,8 +107,24 @@ The respective solver configuration options are as follows:
   The call-string supports the use of the variables `$pred` and `$base`,
   which are substituted with the predicate to solve and with the base solver,
   respectively.
+  Further,
+  it supports an `$options` variable which is substituted with a list of call
+  options defined under `call_options` (see below).
 
   This value defaults to `cbc_timed_solve_with_opts($base,_,$pred,_,Res,Msec)`.
+
+* `call_options` _(Optional)_:
+  List of options forwarded to the Prolog call in the `$options` replacement.
+
+  For instance, the following will substitute `$options` in the prolog call
+  with `[use_clpfd_solver/true, clean_up_pred]`.
+
+  ```yaml
+  prob_1.13.0:
+    call_options:
+      - use_clpfd_solver/true
+      - clean_up_pred
+  ```
 
 * `call_result_var` _(Optional)_:
   The variable used in the `prolog_call` which will bind to the solving result.

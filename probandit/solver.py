@@ -17,7 +17,7 @@ class Solver():
         - base_solver (optional): the base solver to use
             - one of 'PROB', 'KODKOD', 'Z3', 'Z3AXM', 'Z3CNS', 'CDCLT'
             - Default is 'PROB'
-        - preferences (optional): a list of ProBCli preferences
+        - cli_preferences (optional): a list of ProBCli cli_preferences
         - prolog_call (optional): the Prolog call used to evaluate a predicate.
             - Use $pred as a placeholder for the predicate
             - Use $base as a placeholder for the base solver
@@ -44,7 +44,7 @@ class Solver():
             if os.path.isdir(self.path):
                 self.path = os.path.join(self.path, 'probcli')
 
-        self.preferences = self.config.get('preferences', [])
+        self.cli_preferences = self.config.get('cli_preferences', [])
         self.base_solver = self.config.get('base_solver', '\'PROB\'')
 
         self.pred_call = self.config.get('prolog_call', None)
@@ -56,9 +56,9 @@ class Solver():
         self.time_var = self.config.get('call_time_var', 'Msec')
 
         self._cli_args = []
-        if isinstance(self.preferences, dict):
-            self.preferences = [self.preferences]
-        for pref in self.preferences:
+        if isinstance(self.cli_preferences, dict):
+            self.cli_preferences = [self.cli_preferences]
+        for pref in self.cli_preferences:
             # Prefs can be strings or dicts
             if isinstance(pref, dict):
                 for k, v in pref.items():
