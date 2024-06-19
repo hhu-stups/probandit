@@ -30,6 +30,8 @@ class ProBCli():
 
         self.revision = None
 
+        self.SOCKET_TIMEOUT = 600  # 10 minutes
+
         self.interrupt_id = None
         self.interrupt_cmd_path = None
         interrupt_path = os.path.dirname(self.path)
@@ -50,7 +52,7 @@ class ProBCli():
 
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket.connect(('localhost', used_port))
-        self._socket.settimeout(400)  # Sicstus 4.8.0 bug caused runtimes >200s
+        self._socket.settimeout(self.SOCKET_TIMEOUT)  # Sicstus 4.8.0 bug caused runtimes >200s
 
         self.is_connected = True
 
@@ -71,13 +73,11 @@ class ProBCli():
                                    'lib', 'probcliparser.jar')
         self.parser = BParser(parser_path)
 
-
     def close(self):
         if not self.is_connected:
             raise ValueError('Not connected')
 
-        if self.interrupt_cmd_path and os.path.exists(self.interrupt_cmd_path):
-            self.send_interrupt()
+        self.send_interrupt()
         self._halt()
 
         self._socket.close()
@@ -92,11 +92,17 @@ class ProBCli():
         self._socket.sendall(b'halt.\0')
 
     def send_interrupt(self):
-        if not self.interrupt_cmd_path:
-            raise ValueError('No interrupt command available')
-        elif not os.path.exists(self.interrupt_cmd_path):
-            raise ValueError('Interrupt command not found')
-        subprocess.run([self.interrupt_cmd_path, str(self.interrupt_id)])
+        if self.interrupt_cmd_path and os.path.exists(self.interrupt_cmd_path):
+            logging.debug('Sending interrupt to probcli via %s',
+                          self.interrupt_cmd_path)
+            subprocess.run([self.interrupt_cmd_path, str(self.interrupt_id)])
+        else:
+            # If the interrupt command is not available, we can try to
+            # send a user interrupt via the socket.
+            logging.debug('Sending SIGINT to probcli')
+            self.cli_process.send_signal(subprocess.signal.SIGINT)
+
+        self.is_connected = False
 
     def send_prolog(self, prolog):
         if prolog[-1] != '.':

@@ -134,10 +134,14 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     logging.info("Next predicate: %s", pred)
     logging.info("Raw AST: %s", raw_ast)
 
-    ref_results = eval_solvers(reference_solvers, pred, env, samp_size)
+    discard_socket_timeouts = 'solutions_only' in bfuzzer.options
+
+    ref_results = eval_solvers(reference_solvers, pred, env, samp_size,
+                               discard_socket_timeouts=discard_socket_timeouts)
     if ref_results is None:
         return None
-    tar_results = eval_solvers(target_solvers, pred, env, samp_size)
+    tar_results = eval_solvers(target_solvers, pred, env, samp_size,
+                               discard_socket_timeouts=discard_socket_timeouts)
     if tar_results is None:
         return None
 
@@ -156,7 +160,8 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     return pred, raw_ast, env, new_performance_margin, solver_results
 
 
-def eval_solvers(solvers, pred, env, samp_size=1, par2=True):
+def eval_solvers(solvers: list[Solver], pred, env, samp_size=1, par2=True,
+                 discard_socket_timeouts=True):
     results = {}
     for solver in solvers:
         try:
@@ -173,10 +178,15 @@ def eval_solvers(solvers, pred, env, samp_size=1, par2=True):
         except ValueError as e:
             logging.error("Parse error for %s over %s: %s", solver.id, pred, e)
             return None
-        except TimeoutError:
+        except TimeoutError as e:
             logging.error("Timeout error for %s over %s", solver.id, pred)
-            solver.interrupt()
-            return None
+            solver.restart()  # Restart the solver to avoid further errors.
+            time = solver.cli.SOCKET_TIMEOUT
+
+            if not discard_socket_timeouts:
+                results[solver.id] = ('no', 'Socket timeout', time)
+            else:
+                return None
     return results
 
 
