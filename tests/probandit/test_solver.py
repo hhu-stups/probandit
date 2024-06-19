@@ -90,7 +90,7 @@ def test_bseq_translation():
 
     s = Solver(path='foo', mock=True)
 
-    expected = ['a', 'b', 'c']
+    expected = ('a', 'b', 'c')
     actual = s._translate_bseq(value)
 
     assert actual == expected
@@ -107,12 +107,78 @@ def test_bseq_translation_failing():
     assert actual == expected
 
 
-def test_contradiction_found():
-    value = {'type': 'atom', 'value': 'contradiction_found'}
+def test_call_options():
+    call_opts = ['foo', 'bar']
 
-    s = Solver(path='foo', mock=True)
+    s = Solver(path='foo', mock=True, call_options=call_opts)
 
-    expected = None
-    actual = s._translate_solution(value)
+    expected = ['foo', 'bar']
+    actual = s.call_opts
+
+    assert actual == expected
+
+
+def test_singular_call_option():
+    call_opts = 'clean_up_pred'
+
+    s = Solver(path='foo', mock=True, call_options=call_opts)
+
+    expected = ['clean_up_pred']
+    actual = s.call_opts
+
+    assert actual == expected
+
+
+def test_call_option_string():
+    call_opts = ['foo', 'bar']
+
+    s = Solver(path='foo', mock=True, call_options=call_opts)
+
+    expected = "[foo, bar]"
+    actual = s._call_option_string
+
+    assert actual == expected
+
+
+def test_empty_call_option_string():
+    call_opts = []
+
+    s = Solver(path='foo', mock=True, call_options=call_opts)
+
+    expected = "[]"
+    actual = s._call_option_string
+
+    assert actual == expected
+
+
+def test_cli_preferences():
+    cli_preferences = ['foo', 'bar baz']
+
+    s = Solver(path='foo', mock=True, cli_preferences=cli_preferences)
+
+    expected = ['-p', 'foo', '-p', 'bar', 'baz']
+    actual = s._cli_args
+
+    assert actual == expected
+
+
+def test_cli_preferences_as_dict():
+    cli_preferences = {'foo': 'bar', 'baz': False}
+
+    s = Solver(path='foo', mock=True, cli_preferences=cli_preferences)
+
+    expected = ['-p', 'foo', 'bar', '-p', 'baz', 'FALSE']
+    actual = s._cli_args
+
+    assert actual == expected
+
+
+def test_singular_cli_preference():
+    cli_preferences = 'foo'
+
+    s = Solver(path='foo', mock=True, cli_preferences=cli_preferences)
+
+    expected = ['-p', 'foo']
+    actual = s._cli_args
 
     assert actual == expected

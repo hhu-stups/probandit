@@ -48,7 +48,12 @@ class Solver():
         self.base_solver = self.config.get('base_solver', '\'PROB\'')
 
         self.pred_call = self.config.get('prolog_call', None)
-        self.call_opts = self.config.get('call_options', '[]')
+        self.call_opts = self.config.get('call_options', [])
+        if not isinstance(self.call_opts, list):
+            self.call_opts = [self.call_opts]
+        self._call_option_string = '[' + ', '.join(self.call_opts) +  ']'
+
+
         if self.pred_call is None:
             self.pred_call = f'cbc_timed_solve_with_opts($base,$options,$pred,_,Res,Msec)'
             self.pred_call = self.pred_call.replace('$base', self.base_solver)
@@ -56,6 +61,8 @@ class Solver():
         self.time_var = self.config.get('call_time_var', 'Msec')
 
         self._cli_args = []
+        if not isinstance(self.cli_preferences, list):
+            self.cli_preferences = [self.cli_preferences]
         if isinstance(self.cli_preferences, dict):
             self.cli_preferences = [self.cli_preferences]
         for pref in self.cli_preferences:
@@ -126,10 +133,14 @@ class Solver():
         """
         parsed_pred = self.cli.parser.parse_to_prolog(predicate)
         query = self.pred_call.replace('$pred', parsed_pred)
-        query = query.replace('$options', self.call_opts)
+        query = query.replace('$options', self._call_option_string)
+
+        logging.debug('Query: %s', query)
 
         self.cli.send_prolog(query)
         answer, info = self.cli.receive_prolog()
+
+        logging.debug('Answer: %s; info: %s', answer, info)
 
         time = -1
         if info and self.time_var in info:
