@@ -136,11 +136,11 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
 
     discard_socket_timeouts = 'solutions_only' in bfuzzer.options
 
-    ref_results = eval_solvers(reference_solvers, pred, env, samp_size,
+    ref_results = eval_solvers(reference_solvers, pred, samp_size,
                                discard_socket_timeouts=discard_socket_timeouts)
     if ref_results is None:
         return None
-    tar_results = eval_solvers(target_solvers, pred, env, samp_size,
+    tar_results = eval_solvers(target_solvers, pred, samp_size,
                                discard_socket_timeouts=discard_socket_timeouts)
     if tar_results is None:
         return None
@@ -149,7 +149,6 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     report_results(tar_results, label='Target')
 
     # Get min ref and max target time
-    penalty = target_solvers[0].solver_timeout
     ref_time = max([time for (answer, info, time) in ref_results.values()])
     tar_time = min([time for (answer, info, time) in tar_results.values()])
 
@@ -160,18 +159,18 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     return pred, raw_ast, env, new_performance_margin, solver_results
 
 
-def eval_solvers(solvers: list[Solver], pred, env, samp_size=1, par2=True,
+def eval_solvers(solvers: list[Solver], pred, samp_size=1, par2=True,
                  discard_socket_timeouts=True):
     results = {}
     for solver in solvers:
         try:
             logging.debug("Solving with %s, 1/%d", solver.id, samp_size)
-            answer, info, time = solver.solve(pred, env, par2=par2)
+            answer, info, time = solver.solve(pred, par2=par2)
             if samp_size > 1:
                 time_sum = time
                 for i in range(samp_size - 1):
                     logging.debug("Solving again, %d/%d", i+2, samp_size)
-                    _, _, new_time = solver.solve(pred, env, par2=par2)
+                    _, _, new_time = solver.solve(pred, par2=par2)
                     time_sum += new_time
                 time = ceil(time_sum / samp_size)
             results[solver.id] = (answer, info, time)
@@ -268,6 +267,7 @@ if __name__ == '__main__':
     reference_solvers = [Solver(id=id, **(config['solvers'][id]))
                          for id in reference_is]
     for solver in reference_solvers:
+        logging.info('Starting solver %s', solver.id)
         solver.start()
 
     outfile = config['fuzzer'].get('csv', 'results.csv')

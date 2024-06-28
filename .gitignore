@@ -219,3 +219,4 @@ run_example.py
 experiments/
 probandit.zip
 hpc/
+tmp/
