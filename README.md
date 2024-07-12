@@ -61,6 +61,9 @@ solvers:
 
   If the target csv file is given via command line option, the `csv`
   property will be ignored.
+* `independent` _(Optional, default `false`)_: If set, solvers are restarted
+  after each solving attempt to guarantee independence over different
+  benchmarks.
 
 ### Solver configuration
 

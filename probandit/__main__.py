@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 
-def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
+def run_bf(bfuzzer, target_solvers, reference_solvers, csv, reset_after_solve=False):
     samp_size = 1
     for opt in bfuzzer.options:
         if opt.startswith('samp_size('):
@@ -50,9 +50,11 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
 
         logging.info("Action: (%s, %s)", outer_action, mutation)
 
+
         new_data = bf_iteration(bfuzzer, raw_ast, env, mutation,
                                 target_solvers, reference_solvers,
-                                samp_size)
+                                samp_size=samp_size,
+                                reset_after_solve=reset_after_solve)
 
         if new_data is None:
             logging.warning("Skipped iteration due to solver error")
@@ -117,7 +119,8 @@ def run_bf(bfuzzer, target_solvers, reference_solvers, csv):
             inner_agent.receive_reward(mutation, reward)
 
 
-def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers, samp_size=1):
+def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solvers,
+                 samp_size=1, reset_after_solve=False):
     x, y, z, b = bfuzzer.get_random_state()
     logging.info("Prolog RNG: random(%d,%d,%d,%d)", x, y, z, b)
 
@@ -137,10 +140,12 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
     discard_socket_timeouts = 'solutions_only' in bfuzzer.options
 
     ref_results = eval_solvers(reference_solvers, pred, samp_size,
+                               reset_after_solve=reset_after_solve,
                                discard_socket_timeouts=discard_socket_timeouts)
     if ref_results is None:
         return None
     tar_results = eval_solvers(target_solvers, pred, samp_size,
+                               reset_after_solve=reset_after_solve,
                                discard_socket_timeouts=discard_socket_timeouts)
     if tar_results is None:
         return None
@@ -160,18 +165,21 @@ def bf_iteration(bfuzzer, raw_ast, env, mutation, target_solvers, reference_solv
 
 
 def eval_solvers(solvers: list[Solver], pred, samp_size=1, par2=True,
+                 reset_after_solve=False,
                  discard_socket_timeouts=True):
     results = {}
     for solver in solvers:
         try:
             logging.debug("Solving with %s, 1/%d", solver.id, samp_size)
             answer, info, time = solver.solve(pred, par2=par2)
+            if reset_after_solve: solver.restart()
             if samp_size > 1:
                 time_sum = time
                 for i in range(samp_size - 1):
                     logging.debug("Solving again, %d/%d", i+2, samp_size)
                     _, _, new_time = solver.solve(pred, par2=par2)
                     time_sum += new_time
+                    if reset_after_solve: solver.restart()
                 time = ceil(time_sum / samp_size)
             results[solver.id] = (answer, info, time)
         except ValueError as e:
@@ -279,4 +287,7 @@ if __name__ == '__main__':
         header += ',pred,raw_ast\n'
         csv.write(header)
         csv.flush()
-        run_bf(bfuzzer, target_solvers, reference_solvers, csv)
+
+        reset_after_solve = config['fuzzer'].get('independent', False)
+        run_bf(bfuzzer, target_solvers, reference_solvers, csv,
+               reset_after_solve=reset_after_solve)
