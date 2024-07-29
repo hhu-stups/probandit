@@ -133,14 +133,14 @@ if __name__ == '__main__':
 
     orig_margins = [result['margin'] for result in results]
 
-    print('No.  Orig    Indi.           Dep.')
+    print('No.  ', '    Orig', '  Indiv.', '  % Orig', '    Dep.', '  % Orig')
     for i in range(len(orig_margins)):
         row = [
             f'# {i+1:03d}',
             f'{orig_margins[i]: 8d}',
-            f'{ind_margins[i]:8d}',
-            f'{ind_margins[i]/orig_margins[i]*100:4.2f}%' if orig_margins[i] != 0 else 'N/A',
-            f'{dep_margins[i]:8d}'
-            f'{ind_margins[i]/orig_margins[i]*100:4.2f}%' if orig_margins[i] != 0 else 'N/A',
+            f'{ind_margins[i]: 8d}',
+            f'{ind_margins[i]/orig_margins[i]: 4.2%}' if orig_margins[i] != 0 else '     N/A',
+            f'{dep_margins[i]: 8d}',
+            f'{ind_margins[i]/orig_margins[i]: 4.2%}' if orig_margins[i] != 0 else '     N/A',
         ]
-        print('\t'.join(row))
+        print(' '.join(row))
