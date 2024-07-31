@@ -39,10 +39,12 @@ def replay(result, target_solvers, reference_solvers, discard_socket_timeouts=Fa
     pred = result['pred']
     logging.info('Replaying benchmark %s', pred)
 
-    tar_results = eval_solvers(target_solvers.values(), pred, 1,
-                               discard_socket_timeouts)
-    ref_results = eval_solvers(reference_solvers.values(), pred, 1,
-                               discard_socket_timeouts)
+    tar_results = eval_solvers(target_solvers.values(), pred, samp_size=1,
+                               par2=True,
+                               discard_socket_timeouts=discard_socket_timeouts)
+    ref_results = eval_solvers(reference_solvers.values(), pred, samp_size=1,
+                               par2=True,
+                               discard_socket_timeouts=discard_socket_timeouts)
 
     tar_time = min([time for (answer, info, time) in tar_results.values()])
     ref_time = max([time for (answer, info, time) in ref_results.values()])
