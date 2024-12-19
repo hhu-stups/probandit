@@ -14,6 +14,7 @@ same time rather than being bound to one singular version.
 Dependencies:
 
 * Python 3.8+
+* SICStus Prolog 4.8+
 
 Run with `python3 -m probandit <config file path> [<target csv file>]`.
 
@@ -45,6 +46,8 @@ solvers:
   used as target or reference solver.
   Rather, this instance is queried for the BanditFuzz generator and mutator
   capabilities to create and manipulate inputs for the solvers under test.
+  Especially, this path needs to point a distribution of the ProB _source code_
+  as the fuzzing algorithm is executed via SICStus Prolog.
 
   **Note:** Available environment variables can be used and will be expanded,
   e.g. `$PROBDIR` (or any available variable).
